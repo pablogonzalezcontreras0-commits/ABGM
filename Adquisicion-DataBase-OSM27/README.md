@@ -7,7 +7,6 @@ Este directorio contiene la infraestructura de despliegue basada en contenedores
 El proyecto está organizado siguiendo los estándares de la industria para separar documentación, configuración y esquemas:
 
 - **`config/`**: Archivos JSON de configuración del ThingsBoard IoT Gateway (mapeo Modbus, configuración MQTT, etc.).
-- **`docs/`**: Documentación técnica detallada, análisis del protocolo Modbus y guías de arquitectura.
 - **`docker-compose.yml`**: Orquestador principal de la infraestructura.
 - **`deploy.sh`**: Script bash de inicialización automatizada.
 
@@ -66,4 +65,3 @@ Con el Gateway correctamente vinculado, este aprovisionará automáticamente el 
 3. Haz clic en él y navega a la pestaña **Latest Telemetry** para inspeccionar las mediciones eléctricas y variables de estado en tiempo real.
 
 ---
-*Si deseas profundizar en la ingeniería del mapa de registros, la matriz de trazabilidad o la arquitectura del simulador, consulta los documentos Markdown en la carpeta `docs/`.*
