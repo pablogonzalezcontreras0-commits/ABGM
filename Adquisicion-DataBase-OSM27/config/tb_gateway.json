@@ -1,0 +1,21 @@
+{
+  "thingsboard": {
+    "host": "thingsboard",
+    "port": 1883,
+    "security": {
+      "accessToken": "7mtg1h18uh32tg5yjot3"
+    }
+  },
+  "storage": {
+    "type": "memory",
+    "read_records_count": 100,
+    "max_records_count": 100000
+  },
+  "connectors": [
+    {
+      "name": "Modbus Connector",
+      "type": "modbus",
+      "configuration": "modbus.json"
+    }
+  ]
+}
