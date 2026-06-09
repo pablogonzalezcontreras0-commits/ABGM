@@ -1,0 +1,846 @@
+{
+  "ruleChain": {
+    "name": "Root Rule Chain",
+    "type": "CORE",
+    "firstRuleNodeId": null,
+    "root": false,
+    "debugMode": false,
+    "configuration": null,
+    "additionalInfo": null
+  },
+  "metadata": {
+    "version": 55,
+    "firstNodeIndex": 6,
+    "nodes": [
+      {
+        "type": "org.thingsboard.rule.engine.telemetry.TbMsgTimeseriesNode",
+        "name": "Save Timeseries",
+        "debugSettings": null,
+        "singletonMode": false,
+        "queueName": null,
+        "configurationVersion": 1,
+        "configuration": {
+          "defaultTTL": 0,
+          "useServerTs": false,
+          "processingSettings": {
+            "type": "ON_EVERY_MESSAGE"
+          }
+        },
+        "additionalInfo": {
+          "layoutX": 824,
+          "layoutY": 156
+        }
+      },
+      {
+        "type": "org.thingsboard.rule.engine.telemetry.TbMsgAttributesNode",
+        "name": "Save Client Attributes",
+        "debugSettings": {
+          "failuresEnabled": false,
+          "allEnabled": false,
+          "allEnabledUntil": 1780756902694
+        },
+        "singletonMode": false,
+        "queueName": null,
+        "configurationVersion": 3,
+        "configuration": {
+          "processingSettings": {
+            "type": "ON_EVERY_MESSAGE"
+          },
+          "scope": "CLIENT_SCOPE",
+          "notifyDevice": false,
+          "sendAttributesUpdatedNotification": false,
+          "updateAttributesOnlyOnValueChange": true
+        },
+        "additionalInfo": {
+          "description": null,
+          "layoutX": 825,
+          "layoutY": 52
+        }
+      },
+      {
+        "type": "org.thingsboard.rule.engine.filter.TbMsgTypeSwitchNode",
+        "name": "Message Type Switch",
+        "debugSettings": null,
+        "singletonMode": false,
+        "queueName": null,
+        "configurationVersion": 0,
+        "configuration": {
+          "version": 0
+        },
+        "additionalInfo": {
+          "layoutX": 347,
+          "layoutY": 149
+        }
+      },
+      {
+        "type": "org.thingsboard.rule.engine.action.TbLogNode",
+        "name": "Log RPC from Device",
+        "debugSettings": null,
+        "singletonMode": false,
+        "queueName": null,
+        "configurationVersion": 0,
+        "configuration": {
+          "scriptLang": "TBEL",
+          "jsScript": "return '\\nIncoming message:\\n' + JSON.stringify(msg) + '\\nIncoming metadata:\\n' + JSON.stringify(metadata);",
+          "tbelScript": "return '\\nIncoming message:\\n' + JSON.stringify(msg) + '\\nIncoming metadata:\\n' + JSON.stringify(metadata);"
+        },
+        "additionalInfo": {
+          "layoutX": 825,
+          "layoutY": 266
+        }
+      },
+      {
+        "type": "org.thingsboard.rule.engine.action.TbLogNode",
+        "name": "Log Other",
+        "debugSettings": null,
+        "singletonMode": false,
+        "queueName": null,
+        "configurationVersion": 0,
+        "configuration": {
+          "scriptLang": "TBEL",
+          "jsScript": "return '\\nIncoming message:\\n' + JSON.stringify(msg) + '\\nIncoming metadata:\\n' + JSON.stringify(metadata);",
+          "tbelScript": "return '\\nIncoming message:\\n' + JSON.stringify(msg) + '\\nIncoming metadata:\\n' + JSON.stringify(metadata);"
+        },
+        "additionalInfo": {
+          "layoutX": 825,
+          "layoutY": 379
+        }
+      },
+      {
+        "type": "org.thingsboard.rule.engine.rpc.TbSendRPCRequestNode",
+        "name": "RPC Call Request",
+        "debugSettings": null,
+        "singletonMode": false,
+        "queueName": null,
+        "configurationVersion": 0,
+        "configuration": {
+          "timeoutInSeconds": 60
+        },
+        "additionalInfo": {
+          "layoutX": 825,
+          "layoutY": 468
+        }
+      },
+      {
+        "type": "org.thingsboard.rule.engine.profile.TbDeviceProfileNode",
+        "name": "Device Profile Node",
+        "debugSettings": null,
+        "singletonMode": false,
+        "queueName": null,
+        "configurationVersion": 1,
+        "configuration": {
+          "persistAlarmRulesState": false,
+          "fetchAlarmRulesStateOnStart": false
+        },
+        "additionalInfo": {
+          "description": "Process incoming messages from devices with the alarm rules defined in the device profile. Dispatch all incoming messages with \"Success\" relation type.",
+          "layoutX": 204,
+          "layoutY": 240
+        }
+      },
+      {
+        "type": "org.thingsboard.rule.engine.filter.TbJsFilterNode",
+        "name": "Determinar Acción Alarma de Bloqueo",
+        "debugSettings": {
+          "failuresEnabled": false,
+          "allEnabled": false,
+          "allEnabledUntil": 1780692203678
+        },
+        "singletonMode": false,
+        "queueName": null,
+        "configurationVersion": 0,
+        "configuration": {
+          "scriptLang": "JS",
+          "jsScript": "// Si todo está funcionando bien, enviamos \"false\" para limpiar la alarma\nif (msg.estado_cerrado === true) {\n    return false;\n}\n\n// Si se detecta el bloqueo, enviamos \"true\" para crear la alarma\nif (msg.lockout === true) {\n    return true;\n}\n\n// En cualquier otro caso (lockout es false), aseguramos la limpieza\nreturn false;",
+          "tbelScript": "return msg.temperature > 20;"
+        },
+        "additionalInfo": {
+          "description": "",
+          "layoutX": 1088,
+          "layoutY": 49
+        }
+      },
+      {
+        "type": "org.thingsboard.rule.engine.action.TbCreateAlarmNode",
+        "name": "Crear Alarma de Bloqueo",
+        "debugSettings": null,
+        "singletonMode": false,
+        "queueName": null,
+        "configurationVersion": 0,
+        "configuration": {
+          "scriptLang": "JS",
+          "alarmDetailsBuildJs": "var details = {};\nif (metadata.prevAlarmDetails) {\n    details = JSON.parse(metadata.prevAlarmDetails);\n    //remove prevAlarmDetails from metadata\n    delete metadata.prevAlarmDetails;\n    //now metadata is the same as it comes IN this rule node\n}\n\n\nreturn details;",
+          "alarmDetailsBuildTbel": "var details = {};\nif (metadata.prevAlarmDetails != null) {\n    details = JSON.parse(metadata.prevAlarmDetails);\n    //remove prevAlarmDetails from metadata\n    metadata.remove('prevAlarmDetails');\n    //now metadata is the same as it comes IN this rule node\n}\n\n\nreturn details;",
+          "useMessageAlarmData": false,
+          "overwriteAlarmDetails": false,
+          "alarmType": "Alarma de Bloqueo",
+          "severity": "CRITICAL",
+          "propagate": false,
+          "relationTypes": [],
+          "propagateToOwner": false,
+          "propagateToTenant": false,
+          "dynamicSeverity": false
+        },
+        "additionalInfo": {
+          "description": "",
+          "layoutX": 1371,
+          "layoutY": 48
+        }
+      },
+      {
+        "type": "org.thingsboard.rule.engine.action.TbClearAlarmNode",
+        "name": "Limpiar Alarma de Bloqueo",
+        "debugSettings": null,
+        "singletonMode": false,
+        "queueName": null,
+        "configurationVersion": 0,
+        "configuration": {
+          "scriptLang": "TBEL",
+          "alarmDetailsBuildJs": "var details = {};\nif (metadata.prevAlarmDetails) {\n    details = JSON.parse(metadata.prevAlarmDetails);\n    //remove prevAlarmDetails from metadata\n    delete metadata.prevAlarmDetails;\n    //now metadata is the same as it comes IN this rule node\n}\n\n\nreturn details;",
+          "alarmDetailsBuildTbel": "var details = {};\nif (metadata.prevAlarmDetails != null) {\n    details = JSON.parse(metadata.prevAlarmDetails);\n    //remove prevAlarmDetails from metadata\n    metadata.remove('prevAlarmDetails');\n    //now metadata is the same as it comes IN this rule node\n}\n\n\nreturn details;",
+          "alarmType": "Alarma de Bloqueo"
+        },
+        "additionalInfo": {
+          "description": "",
+          "layoutX": 1378,
+          "layoutY": 773
+        }
+      },
+      {
+        "type": "org.thingsboard.rule.engine.filter.TbJsFilterNode",
+        "name": "Determinar Acción Alarma de Cortocircuito",
+        "debugSettings": {
+          "failuresEnabled": false,
+          "allEnabled": false,
+          "allEnabledUntil": 0
+        },
+        "singletonMode": false,
+        "queueName": null,
+        "configurationVersion": 0,
+        "configuration": {
+          "scriptLang": "JS",
+          "jsScript": "// Si todo está funcionando bien, enviamos \"false\" para limpiar la alarma\nif (msg.estado_cerrado === true) {\n    return false;\n}\n\n// Si se detecta el bloqueo, enviamos \"true\" para crear la alarma\nif (msg.pickup === true) {\n    return true;\n}\n\n// En cualquier otro caso (lockout es false), aseguramos la limpieza\nreturn false;",
+          "tbelScript": "return msg.temperature > 20;"
+        },
+        "additionalInfo": {
+          "description": "",
+          "layoutX": 1090,
+          "layoutY": 192
+        }
+      },
+      {
+        "type": "org.thingsboard.rule.engine.action.TbCreateAlarmNode",
+        "name": "Crear Alarma de Cortocircuito",
+        "debugSettings": {
+          "failuresEnabled": false,
+          "allEnabled": false,
+          "allEnabledUntil": 0
+        },
+        "singletonMode": false,
+        "queueName": null,
+        "configurationVersion": 0,
+        "configuration": {
+          "scriptLang": "JS",
+          "alarmDetailsBuildJs": "var details = {};\nif (metadata.prevAlarmDetails) {\n    details = JSON.parse(metadata.prevAlarmDetails);\n    //remove prevAlarmDetails from metadata\n    delete metadata.prevAlarmDetails;\n    //now metadata is the same as it comes IN this rule node\n}\n\n\nreturn details;",
+          "alarmDetailsBuildTbel": "var details = {};\nif (metadata.prevAlarmDetails != null) {\n    details = JSON.parse(metadata.prevAlarmDetails);\n    //remove prevAlarmDetails from metadata\n    metadata.remove('prevAlarmDetails');\n    //now metadata is the same as it comes IN this rule node\n}\n\n\nreturn details;",
+          "useMessageAlarmData": false,
+          "overwriteAlarmDetails": false,
+          "alarmType": "Alarma de Cortocircuito",
+          "severity": "CRITICAL",
+          "propagate": false,
+          "relationTypes": [],
+          "propagateToOwner": false,
+          "propagateToTenant": false,
+          "dynamicSeverity": false
+        },
+        "additionalInfo": {
+          "description": "",
+          "layoutX": 1377,
+          "layoutY": 190
+        }
+      },
+      {
+        "type": "org.thingsboard.rule.engine.action.TbClearAlarmNode",
+        "name": "Limpiar Alarma de Cortocircuito",
+        "debugSettings": {
+          "failuresEnabled": false,
+          "allEnabled": false,
+          "allEnabledUntil": 0
+        },
+        "singletonMode": false,
+        "queueName": null,
+        "configurationVersion": 0,
+        "configuration": {
+          "scriptLang": "TBEL",
+          "alarmDetailsBuildJs": "var details = {};\nif (metadata.prevAlarmDetails) {\n    details = JSON.parse(metadata.prevAlarmDetails);\n    //remove prevAlarmDetails from metadata\n    delete metadata.prevAlarmDetails;\n    //now metadata is the same as it comes IN this rule node\n}\n\n\nreturn details;",
+          "alarmDetailsBuildTbel": "var details = {};\nif (metadata.prevAlarmDetails != null) {\n    details = JSON.parse(metadata.prevAlarmDetails);\n    //remove prevAlarmDetails from metadata\n    metadata.remove('prevAlarmDetails');\n    //now metadata is the same as it comes IN this rule node\n}\n\n\nreturn details;",
+          "alarmType": "Alarma de Cortocircuito"
+        },
+        "additionalInfo": {
+          "description": "",
+          "layoutX": 1378,
+          "layoutY": 848
+        }
+      },
+      {
+        "type": "org.thingsboard.rule.engine.filter.TbJsFilterNode",
+        "name": "Determinar Acción Alarma de SAG",
+        "debugSettings": {
+          "failuresEnabled": false,
+          "allEnabled": false,
+          "allEnabledUntil": 0
+        },
+        "singletonMode": false,
+        "queueName": null,
+        "configurationVersion": 0,
+        "configuration": {
+          "scriptLang": "JS",
+          "jsScript": "// Si todo está funcionando bien, enviamos \"false\" para limpiar la alarma\nif (msg.estado_cerrado === true && msg.sag === false ) {\n    return false;\n}\n\n// Si se detecta el bloqueo, enviamos \"true\" para crear la alarma\nif (msg.sag === true) {\n    return true;\n}\n\n// En cualquier otro caso (lockout es false), aseguramos la limpieza\nreturn false;",
+          "tbelScript": "return msg.temperature > 20;"
+        },
+        "additionalInfo": {
+          "description": "",
+          "layoutX": 1089,
+          "layoutY": 335
+        }
+      },
+      {
+        "type": "org.thingsboard.rule.engine.action.TbCreateAlarmNode",
+        "name": "Crear Alarma de SAG",
+        "debugSettings": {
+          "failuresEnabled": false,
+          "allEnabled": false,
+          "allEnabledUntil": 0
+        },
+        "singletonMode": false,
+        "queueName": null,
+        "configurationVersion": 0,
+        "configuration": {
+          "scriptLang": "JS",
+          "alarmDetailsBuildJs": "var details = {};\nif (metadata.prevAlarmDetails) {\n    details = JSON.parse(metadata.prevAlarmDetails);\n    //remove prevAlarmDetails from metadata\n    delete metadata.prevAlarmDetails;\n    //now metadata is the same as it comes IN this rule node\n}\n\n\nreturn details;",
+          "alarmDetailsBuildTbel": "var details = {};\nif (metadata.prevAlarmDetails != null) {\n    details = JSON.parse(metadata.prevAlarmDetails);\n    //remove prevAlarmDetails from metadata\n    metadata.remove('prevAlarmDetails');\n    //now metadata is the same as it comes IN this rule node\n}\n\n\nreturn details;",
+          "useMessageAlarmData": false,
+          "overwriteAlarmDetails": false,
+          "alarmType": "Alarma de SAG",
+          "severity": "CRITICAL",
+          "propagate": false,
+          "relationTypes": [],
+          "propagateToOwner": false,
+          "propagateToTenant": false,
+          "dynamicSeverity": false
+        },
+        "additionalInfo": {
+          "description": "",
+          "layoutX": 1371,
+          "layoutY": 346
+        }
+      },
+      {
+        "type": "org.thingsboard.rule.engine.action.TbClearAlarmNode",
+        "name": "Limpiar Alarma de SAG",
+        "debugSettings": {
+          "failuresEnabled": false,
+          "allEnabled": false,
+          "allEnabledUntil": 0
+        },
+        "singletonMode": false,
+        "queueName": null,
+        "configurationVersion": 0,
+        "configuration": {
+          "scriptLang": "TBEL",
+          "alarmDetailsBuildJs": "var details = {};\nif (metadata.prevAlarmDetails) {\n    details = JSON.parse(metadata.prevAlarmDetails);\n    //remove prevAlarmDetails from metadata\n    delete metadata.prevAlarmDetails;\n    //now metadata is the same as it comes IN this rule node\n}\n\n\nreturn details;",
+          "alarmDetailsBuildTbel": "var details = {};\nif (metadata.prevAlarmDetails != null) {\n    details = JSON.parse(metadata.prevAlarmDetails);\n    //remove prevAlarmDetails from metadata\n    metadata.remove('prevAlarmDetails');\n    //now metadata is the same as it comes IN this rule node\n}\n\n\nreturn details;",
+          "alarmType": "Alarma de SAG"
+        },
+        "additionalInfo": {
+          "description": "",
+          "layoutX": 1382,
+          "layoutY": 924
+        }
+      },
+      {
+        "type": "org.thingsboard.rule.engine.transform.TbTransformMsgNode",
+        "name": "Notificaciones",
+        "debugSettings": {
+          "failuresEnabled": false,
+          "allEnabled": false,
+          "allEnabledUntil": 1780755509912
+        },
+        "singletonMode": false,
+        "queueName": null,
+        "configurationVersion": 0,
+        "configuration": {
+          "scriptLang": "JS",
+          "jsScript": "// 1. CAZADOR DE VARIABLES: Buscamos el tipo de alarma directo en el \"msg\" primero\nvar tipo_falla = msg.type || msg.name || metadata.alarmType || metadata.type || \"Anomalía No Identificada\";\n\n// 2. Definimos el esqueleto del mensaje\nvar texto_mensaje = \"🚨 ALERTA CRÍTICA SCADA (OSM27) 🚨\\n\\n\";\n\n// 3. Lógica condicional mapeada\nswitch (tipo_falla) {\n    case \"Alarma de Cortocircuito\":\n        texto_mensaje += \"⚡ EVENTO: Cortocircuito detectado (Sobrecorriente).\\n⚠️ Las corrientes de fase superaron los 300A nominales. El reconectador inicia ciclo de apertura para proteger la red.\";\n        break;\n        \n    case \"Alarma de SAG\":\n        texto_mensaje += \"📉 ALERTA: Hueco de Tensión / SAG detectado.\\n⚠️ El voltaje RMS ha caído por debajo de 11.22 kV en media tensión. Monitoreando estabilidad de carga.\";\n        break;\n        \n    case \"Alarma de Bloqueo\":\n        texto_mensaje += \"🛑 BLOQUEO TOTAL: LOCKOUT (ANSI 79).\\n❌ Falla permanente en la línea. El equipo agotó sus 3 reintentos de cierre automático. Requiere patrullaje de cuadrilla y RESET manual.\";\n        break;\n        \n    case \"Alarma de Equipo Abierto\":\n        texto_mensaje += \"🔓 AVISO: El reconectador se ha ABIERTO.\\nℹ️ La línea se encuentra desenergizada.\";\n        break;\n        \n    case \"Alarma de Equipo Cerrado\":\n        texto_mensaje += \"✅ AVISO: El reconectador se ha CERRADO.\\n⚡ El circuito está energizado y operando con normalidad.\";\n        break;\n        \n    default:\n        texto_mensaje += \"ℹ️ AVISO: Registro de evento de red no indexado: [\" + tipo_falla + \"]\";\n}\n\n// 4. Parche de Zona Horaria (UTC-3 para Argentina)\nvar fecha_actual = new Date();\n// Restamos 3 horas exactas para compensar el UTC por defecto del servidor\nfecha_actual.setHours(fecha_actual.getHours() - 3);\n\n// Formateamos para que se vea limpio (Ej: 2026-06-06 10:05:46)\nvar fechaLocal = fecha_actual.toISOString().replace(/T/, ' ').replace(/\\..+/, '');\n\ntexto_mensaje += \"\\n\\n📅 Fecha/Hora (ARG): \" + fechaLocal;\ntexto_mensaje += \"\\n🌐 Origen: Modbus OSM27 - IPSEP (UNRC)\";\n\n// 5. Empaquetamos para Telegram\nvar telegramPayload = {\n    \"chat_id\": \"6174555600\", \n    \"text\": texto_mensaje\n};\n\nreturn {msg: telegramPayload, metadata: metadata, msgType: msgType};",
+          "tbelScript": "return {msg: msg, metadata: metadata, msgType: msgType};"
+        },
+        "additionalInfo": {
+          "description": "",
+          "layoutX": 1701,
+          "layoutY": 26
+        }
+      },
+      {
+        "type": "org.thingsboard.rule.engine.rest.TbRestApiCallNode",
+        "name": "Telegram",
+        "debugSettings": {
+          "failuresEnabled": false,
+          "allEnabled": false,
+          "allEnabledUntil": 1780691837178
+        },
+        "singletonMode": false,
+        "queueName": null,
+        "configurationVersion": 3,
+        "configuration": {
+          "restEndpointUrlPattern": "https://api.telegram.org/bot8991995046:AAFVrNm7Od-L6YGcqOqnAau8CZW5GQ8Ban8/sendMessage",
+          "requestMethod": "POST",
+          "useSimpleClientHttpFactory": true,
+          "parseToPlainText": false,
+          "ignoreRequestBody": false,
+          "enableProxy": false,
+          "useSystemProxyProperties": false,
+          "proxyScheme": null,
+          "proxyHost": null,
+          "proxyPort": 0,
+          "proxyUser": null,
+          "proxyPassword": null,
+          "readTimeoutMs": 0,
+          "maxParallelRequestsCount": 0,
+          "headers": {
+            "Content-Type": "application/json"
+          },
+          "credentials": {
+            "type": "anonymous"
+          },
+          "maxInMemoryBufferSizeInKb": 256
+        },
+        "additionalInfo": {
+          "description": "",
+          "layoutX": 2057,
+          "layoutY": 27
+        }
+      },
+      {
+        "type": "org.thingsboard.rule.engine.mail.TbSendEmailNode",
+        "name": "Despachar por Servidor SMTP",
+        "debugSettings": {
+          "failuresEnabled": false,
+          "allEnabled": false,
+          "allEnabledUntil": 1780857215769
+        },
+        "singletonMode": false,
+        "queueName": null,
+        "configurationVersion": 0,
+        "configuration": {
+          "useSystemSmtpSettings": true,
+          "smtpProtocol": "smtp",
+          "smtpHost": "localhost",
+          "smtpPort": 25,
+          "timeout": 10000,
+          "enableTls": false,
+          "tlsVersion": "TLSv1.2",
+          "enableProxy": false,
+          "proxyHost": null,
+          "proxyPort": null,
+          "proxyUser": null,
+          "proxyPassword": null,
+          "username": null,
+          "password": null
+        },
+        "additionalInfo": {
+          "description": "",
+          "layoutX": 2295,
+          "layoutY": 651
+        }
+      },
+      {
+        "type": "org.thingsboard.rule.engine.transform.TbTransformMsgNode",
+        "name": "Formatear Correo HTML",
+        "debugSettings": {
+          "failuresEnabled": false,
+          "allEnabled": false,
+          "allEnabledUntil": 1780850411438
+        },
+        "singletonMode": false,
+        "queueName": null,
+        "configurationVersion": 0,
+        "configuration": {
+          "scriptLang": "JS",
+          "jsScript": "// 1. Cazador de variables\nvar tipo_falla = msg.type || msg.name || metadata.alarmType || metadata.type || \"Anomalía No Identificada\";\n\n// 2. Paleta de colores y variables SCADA\nvar color_alerta = \"#d9534f\"; // Rojo por defecto\nvar texto_severidad = \"CRÍTICA\";\nvar detalle_tecnico = \"Se ha registrado un evento anómalo en el equipo OSM27.\";\n\n// 3. Switch de clasificación de estados\nswitch (tipo_falla) {\n    case \"Aviso de Equipo Cerrado\":\n        color_alerta = \"#28a745\"; // Verde\n        texto_severidad = \"NORMALIZADO\";\n        detalle_tecnico = \"El circuito principal ha sido cerrado y re-energizado correctamente.\";\n        break;\n        \n    case \"Aviso de Equipo Abierto\":\n        color_alerta = \"#ff9800\"; // Naranja\n        texto_severidad = \"ADVERTENCIA / MANTENIMIENTO\";\n        detalle_tecnico = \"El reconectador ha abierto sus contactos. La línea se encuentra desenergizada.\";\n        break;\n\n    case \"Alarma de Cortocircuito\":\n        color_alerta = \"#d9534f\"; // Rojo\n        texto_severidad = \"CRÍTICA (ANSI 50/51)\";\n        detalle_tecnico = \"Se ha detectado una sobrecorriente por encima de los 300A nominales.\";\n        break;\n        \n    case \"Alarma de SAG\":\n        color_alerta = \"#f39c12\"; // Amarillo\n        texto_severidad = \"CALIDAD DE RED\";\n        detalle_tecnico = \"Hundimiento de tensión (SAG). Voltaje RMS < 11.22 kV.\";\n        break;\n        \n    case \"Alarma de Bloqueo\":\n        color_alerta = \"#8b0000\"; // Bordó\n        texto_severidad = \"BLOQUEO TOTAL (ANSI 79)\";\n        detalle_tecnico = \"Falla permanente. El equipo superó los reintentos automáticos. Requiere RESET manual.\";\n        break;\n}\n\n// 4. Parche horario (UTC-3 ARG)\nvar fecha_actual = new Date();\nfecha_actual.setHours(fecha_actual.getHours() - 3);\nvar fechaLocal = fecha_actual.toISOString().replace(/T/, ' ').replace(/\\..+/, '');\n\n// 5. Maquetación del cuerpo del correo en HTML industrial\nvar html_body = '<div style=\"font-family: Arial, sans-serif; border: 2px solid ' + color_alerta + '; padding: 20px; border-radius: 5px; max-width: 600px;\">' +\n    '<h2 style=\"color: ' + color_alerta + '; margin-top: 0;\">⚠️ SCADA IPSEP - Reporte de Red</h2>' +\n    '<p>Se ha registrado un cambio de estado en el reconectador <strong>OSM27</strong> del campus UNRC.</p>' +\n    '<table style=\"width: 100%; border-collapse: collapse; margin: 15px 0;\">' +\n        '<tr style=\"background-color: #f8f9fa;\">' +\n            '<th style=\"padding: 8px; border: 1px solid #dee2e6; text-align: left;\">Parámetro</th>' +\n            '<th style=\"padding: 8px; border: 1px solid #dee2e6; text-align: left;\">Detalle</th>' +\n        '</tr>' +\n        '<tr>' +\n            '<td style=\"padding: 8px; border: 1px solid #dee2e6;\"><strong>Evento:</strong></td>' +\n            '<td style=\"padding: 8px; border: 1px solid #dee2e6; font-weight: bold;\">' + tipo_falla + '</td>' +\n        '</tr>' +\n        '<tr>' +\n            '<td style=\"padding: 8px; border: 1px solid #dee2e6;\"><strong>Severidad:</strong></td>' +\n            '<td style=\"padding: 8px; border: 1px solid #dee2e6; color: ' + color_alerta + '; font-weight: bold;\">' + texto_severidad + '</td>' +\n        '</tr>' +\n        '<tr>' +\n            '<td style=\"padding: 8px; border: 1px solid #dee2e6;\"><strong>Diagnóstico:</strong></td>' +\n            '<td style=\"padding: 8px; border: 1px solid #dee2e6;\">' + detalle_tecnico + '</td>' +\n        '</tr>' +\n        '<tr>' +\n            '<td style=\"padding: 8px; border: 1px solid #dee2e6;\"><strong>Fecha/Hora (ARG):</strong></td>' +\n            '<td style=\"padding: 8px; border: 1px solid #dee2e6;\">' + fechaLocal + '</td>' +\n        '</tr>' +\n    '</table>' +\n    '<p style=\"font-size: 12px; color: #6c757d; margin-top: 20px;\">' +\n        'Este es un aviso automático generado por el Gateway Modbus/TCP. No responder.' +\n    '</p>' +\n'</div>';\n\n// 6. Inyección en Metadata (El motor de plantillas de TB lee de aquí)\nmetadata.email_from = \"tenant@thingsboard.org\";\nmetadata.email_to = \"aldair.moyano.97@gmail.com\"; // 👈 Tu correo real\nmetadata.email_subject = \"📡 Alerta SCADA OSM27: \" + tipo_falla;\nmetadata.email_body = html_body;\n\n// Retorno empaquetado\nreturn {\n    msg: msg,             // Dejamos el payload original intacto\n    metadata: metadata,   // Enviamos la metadata enriquecida\n    msgType: msgType\n};\n",
+          "tbelScript": "return {msg: msg, metadata: metadata, msgType: msgType};"
+        },
+        "additionalInfo": {
+          "description": "",
+          "layoutX": 1708,
+          "layoutY": 651
+        }
+      },
+      {
+        "type": "org.thingsboard.rule.engine.filter.TbJsFilterNode",
+        "name": "Determinar Acción Alarma de Equipo Abierto",
+        "debugSettings": {
+          "failuresEnabled": false,
+          "allEnabled": false,
+          "allEnabledUntil": 0
+        },
+        "singletonMode": false,
+        "queueName": null,
+        "configurationVersion": 0,
+        "configuration": {
+          "scriptLang": "JS",
+          "jsScript": "\n// Si se detecta el circuito abierto, enviamos \"true\" para crear la alarma\nif (msg.estado_abierto === true) {\n    return true;\n}\n\nif (msg.estado_cerrado === true) {\n    return false;\n}\n// En cualquier otro caso (lockout es false), aseguramos la limpieza\nreturn false;",
+          "tbelScript": "return msg.temperature > 20;"
+        },
+        "additionalInfo": {
+          "description": "",
+          "layoutX": 1088,
+          "layoutY": 502
+        }
+      },
+      {
+        "type": "org.thingsboard.rule.engine.action.TbCreateAlarmNode",
+        "name": "Crear Alarma de Equipo Abierto",
+        "debugSettings": {
+          "failuresEnabled": false,
+          "allEnabled": false,
+          "allEnabledUntil": 0
+        },
+        "singletonMode": false,
+        "queueName": null,
+        "configurationVersion": 0,
+        "configuration": {
+          "scriptLang": "JS",
+          "alarmDetailsBuildJs": "var details = {};\nif (metadata.prevAlarmDetails) {\n    details = JSON.parse(metadata.prevAlarmDetails);\n    //remove prevAlarmDetails from metadata\n    delete metadata.prevAlarmDetails;\n    //now metadata is the same as it comes IN this rule node\n}\n\n\nreturn details;",
+          "alarmDetailsBuildTbel": "var details = {};\nif (metadata.prevAlarmDetails != null) {\n    details = JSON.parse(metadata.prevAlarmDetails);\n    //remove prevAlarmDetails from metadata\n    metadata.remove('prevAlarmDetails');\n    //now metadata is the same as it comes IN this rule node\n}\n\n\nreturn details;",
+          "useMessageAlarmData": false,
+          "overwriteAlarmDetails": false,
+          "alarmType": "Alarma de Equipo Abierto",
+          "severity": "CRITICAL",
+          "propagate": false,
+          "relationTypes": [],
+          "propagateToOwner": false,
+          "propagateToTenant": false,
+          "dynamicSeverity": false
+        },
+        "additionalInfo": {
+          "description": "",
+          "layoutX": 1373,
+          "layoutY": 507
+        }
+      },
+      {
+        "type": "org.thingsboard.rule.engine.filter.TbJsFilterNode",
+        "name": "Determinar Acción Alarma de Equipo Cerrado",
+        "debugSettings": {
+          "failuresEnabled": false,
+          "allEnabled": false,
+          "allEnabledUntil": 1780755554180
+        },
+        "singletonMode": false,
+        "queueName": null,
+        "configurationVersion": 0,
+        "configuration": {
+          "scriptLang": "JS",
+          "jsScript": "// Verificamos si la variable existe en el paquete\nif (typeof msg.estado_cerrado !== 'undefined') {\n    // Evaluamos si el valor es 1 (entero), \"1\" (texto) o true (booleano)\n    // Esto lo hace a prueba de fallos sin importar cómo lo envíe el simulador Modbus\n    return msg.estado_cerrado == 1 || msg.estado_cerrado === \"1\" || msg.estado_cerrado === true;\n}\n\n// Si la variable no viene en este paquete de telemetría, ignoramos\nreturn false;",
+          "tbelScript": "return msg.temperature > 20;"
+        },
+        "additionalInfo": {
+          "description": "",
+          "layoutX": 1089,
+          "layoutY": 658
+        }
+      },
+      {
+        "type": "org.thingsboard.rule.engine.action.TbCreateAlarmNode",
+        "name": "Crear Alarma de Equipo Cerrado",
+        "debugSettings": {
+          "failuresEnabled": false,
+          "allEnabled": false,
+          "allEnabledUntil": 1780755554180
+        },
+        "singletonMode": false,
+        "queueName": null,
+        "configurationVersion": 0,
+        "configuration": {
+          "scriptLang": "JS",
+          "alarmDetailsBuildJs": "var details = {};\nif (metadata.prevAlarmDetails) {\n    details = JSON.parse(metadata.prevAlarmDetails);\n    //remove prevAlarmDetails from metadata\n    delete metadata.prevAlarmDetails;\n    //now metadata is the same as it comes IN this rule node\n}\n\n\nreturn details;",
+          "alarmDetailsBuildTbel": "var details = {};\nif (metadata.prevAlarmDetails != null) {\n    details = JSON.parse(metadata.prevAlarmDetails);\n    //remove prevAlarmDetails from metadata\n    metadata.remove('prevAlarmDetails');\n    //now metadata is the same as it comes IN this rule node\n}\n\n\nreturn details;",
+          "useMessageAlarmData": false,
+          "overwriteAlarmDetails": false,
+          "alarmType": "Alarma de Equipo Cerrado",
+          "severity": "WARNING",
+          "propagate": false,
+          "relationTypes": [],
+          "propagateToOwner": false,
+          "propagateToTenant": false,
+          "dynamicSeverity": false
+        },
+        "additionalInfo": {
+          "description": "",
+          "layoutX": 1374,
+          "layoutY": 673
+        }
+      },
+      {
+        "type": "org.thingsboard.rule.engine.action.TbClearAlarmNode",
+        "name": "Limpiar Alarma de Equipo Abierto",
+        "debugSettings": {
+          "failuresEnabled": false,
+          "allEnabled": false,
+          "allEnabledUntil": 0
+        },
+        "singletonMode": false,
+        "queueName": null,
+        "configurationVersion": 0,
+        "configuration": {
+          "scriptLang": "TBEL",
+          "alarmDetailsBuildJs": "var details = {};\nif (metadata.prevAlarmDetails) {\n    details = JSON.parse(metadata.prevAlarmDetails);\n    //remove prevAlarmDetails from metadata\n    delete metadata.prevAlarmDetails;\n    //now metadata is the same as it comes IN this rule node\n}\n\n\nreturn details;",
+          "alarmDetailsBuildTbel": "var details = {};\nif (metadata.prevAlarmDetails != null) {\n    details = JSON.parse(metadata.prevAlarmDetails);\n    //remove prevAlarmDetails from metadata\n    metadata.remove('prevAlarmDetails');\n    //now metadata is the same as it comes IN this rule node\n}\n\n\nreturn details;",
+          "alarmType": "Alarma de Equipo Abierto"
+        },
+        "additionalInfo": {
+          "description": "",
+          "layoutX": 1381,
+          "layoutY": 996
+        }
+      },
+      {
+        "type": "org.thingsboard.rule.engine.action.TbClearAlarmNode",
+        "name": "Limpiar Alarma de Equipo Cerrado",
+        "debugSettings": {
+          "failuresEnabled": false,
+          "allEnabled": false,
+          "allEnabledUntil": 0
+        },
+        "singletonMode": false,
+        "queueName": null,
+        "configurationVersion": 0,
+        "configuration": {
+          "scriptLang": "TBEL",
+          "alarmDetailsBuildJs": "var details = {};\nif (metadata.prevAlarmDetails) {\n    details = JSON.parse(metadata.prevAlarmDetails);\n    //remove prevAlarmDetails from metadata\n    delete metadata.prevAlarmDetails;\n    //now metadata is the same as it comes IN this rule node\n}\n\n\nreturn details;",
+          "alarmDetailsBuildTbel": "var details = {};\nif (metadata.prevAlarmDetails != null) {\n    details = JSON.parse(metadata.prevAlarmDetails);\n    //remove prevAlarmDetails from metadata\n    metadata.remove('prevAlarmDetails');\n    //now metadata is the same as it comes IN this rule node\n}\n\n\nreturn details;",
+          "alarmType": "Alarma de Equipo Cerrado"
+        },
+        "additionalInfo": {
+          "description": "",
+          "layoutX": 2143,
+          "layoutY": 273
+        }
+      },
+      {
+        "type": "org.thingsboard.rule.engine.mail.TbMsgToEmailNode",
+        "name": "Empaquetador",
+        "debugSettings": {
+          "failuresEnabled": false,
+          "allEnabled": false,
+          "allEnabledUntil": 1780857974119
+        },
+        "singletonMode": false,
+        "queueName": null,
+        "configurationVersion": 0,
+        "configuration": {
+          "fromTemplate": "${email_from}",
+          "toTemplate": "${email_to}",
+          "ccTemplate": null,
+          "bccTemplate": null,
+          "subjectTemplate": "${email_subject}",
+          "mailBodyType": "true",
+          "bodyTemplate": "${email_body}"
+        },
+        "additionalInfo": {
+          "description": "",
+          "layoutX": 2002,
+          "layoutY": 651
+        }
+      }
+    ],
+    "connections": [
+      {
+        "fromIndex": 1,
+        "toIndex": 7,
+        "type": "Success"
+      },
+      {
+        "fromIndex": 1,
+        "toIndex": 10,
+        "type": "Success"
+      },
+      {
+        "fromIndex": 1,
+        "toIndex": 13,
+        "type": "Success"
+      },
+      {
+        "fromIndex": 1,
+        "toIndex": 20,
+        "type": "Success"
+      },
+      {
+        "fromIndex": 1,
+        "toIndex": 22,
+        "type": "Success"
+      },
+      {
+        "fromIndex": 2,
+        "toIndex": 0,
+        "type": "Post telemetry"
+      },
+      {
+        "fromIndex": 2,
+        "toIndex": 1,
+        "type": "Post attributes"
+      },
+      {
+        "fromIndex": 2,
+        "toIndex": 3,
+        "type": "RPC Request from Device"
+      },
+      {
+        "fromIndex": 2,
+        "toIndex": 4,
+        "type": "Other"
+      },
+      {
+        "fromIndex": 2,
+        "toIndex": 5,
+        "type": "RPC Request to Device"
+      },
+      {
+        "fromIndex": 6,
+        "toIndex": 2,
+        "type": "Success"
+      },
+      {
+        "fromIndex": 7,
+        "toIndex": 8,
+        "type": "True"
+      },
+      {
+        "fromIndex": 7,
+        "toIndex": 25,
+        "type": "True"
+      },
+      {
+        "fromIndex": 8,
+        "toIndex": 16,
+        "type": "Created"
+      },
+      {
+        "fromIndex": 8,
+        "toIndex": 19,
+        "type": "Created"
+      },
+      {
+        "fromIndex": 10,
+        "toIndex": 11,
+        "type": "True"
+      },
+      {
+        "fromIndex": 10,
+        "toIndex": 25,
+        "type": "True"
+      },
+      {
+        "fromIndex": 11,
+        "toIndex": 16,
+        "type": "Created"
+      },
+      {
+        "fromIndex": 11,
+        "toIndex": 19,
+        "type": "Created"
+      },
+      {
+        "fromIndex": 13,
+        "toIndex": 14,
+        "type": "True"
+      },
+      {
+        "fromIndex": 13,
+        "toIndex": 25,
+        "type": "True"
+      },
+      {
+        "fromIndex": 14,
+        "toIndex": 16,
+        "type": "Created"
+      },
+      {
+        "fromIndex": 14,
+        "toIndex": 19,
+        "type": "Created"
+      },
+      {
+        "fromIndex": 16,
+        "toIndex": 17,
+        "type": "Success"
+      },
+      {
+        "fromIndex": 19,
+        "toIndex": 26,
+        "type": "Success"
+      },
+      {
+        "fromIndex": 20,
+        "toIndex": 21,
+        "type": "True"
+      },
+      {
+        "fromIndex": 20,
+        "toIndex": 25,
+        "type": "True"
+      },
+      {
+        "fromIndex": 21,
+        "toIndex": 16,
+        "type": "Created"
+      },
+      {
+        "fromIndex": 21,
+        "toIndex": 19,
+        "type": "Created"
+      },
+      {
+        "fromIndex": 22,
+        "toIndex": 9,
+        "type": "True"
+      },
+      {
+        "fromIndex": 22,
+        "toIndex": 12,
+        "type": "True"
+      },
+      {
+        "fromIndex": 22,
+        "toIndex": 15,
+        "type": "True"
+      },
+      {
+        "fromIndex": 22,
+        "toIndex": 23,
+        "type": "True"
+      },
+      {
+        "fromIndex": 22,
+        "toIndex": 24,
+        "type": "True"
+      },
+      {
+        "fromIndex": 23,
+        "toIndex": 16,
+        "type": "Created"
+      },
+      {
+        "fromIndex": 23,
+        "toIndex": 19,
+        "type": "Created"
+      },
+      {
+        "fromIndex": 26,
+        "toIndex": 18,
+        "type": "Success"
+      }
+    ],
+    "ruleChainConnections": null
+  }
+}
